@@ -4,20 +4,45 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Actualización Tótem</title>
+
+    <!-- 
+        POLYFILL DE WEB SERIAL (sobre WebUSB)
+        Se carga y se aplica ANTES que esp-web-tools, para que si el navegador
+        (típicamente Chrome en Android) no soporta navigator.serial de forma nativa,
+        quede "parcheado" con esta implementación basada en WebUSB.
+        En Chrome de escritorio, donde navigator.serial ya existe de forma nativa,
+        este bloque no hace nada (se respeta la implementación nativa).
+    -->
+    <script type="module">
+        import { serial as polyfillSerial } from "https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/+esm";
+
+        if (!('serial' in navigator)) {
+            navigator.serial = polyfillSerial;
+            console.log("[Polyfill] navigator.serial no estaba disponible de forma nativa. Se ha aplicado el polyfill basado en WebUSB.");
+        } else {
+            console.log("[Polyfill] navigator.serial ya está disponible de forma nativa. No se aplica el polyfill.");
+        }
+    </script>
+
+    <!-- esp-web-tools se carga DESPUÉS del bloque anterior -->
     <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f4f4f9; padding: 50px; }
         .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
         h1 { color: #0056b3; }
         p { color: #555; margin-bottom: 20px; }
+        .aviso { font-size: 12px; color: #999; margin-top: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🔧 Mantenimiento Tótem</h1>
         <p>Conecte el cable USB al ESP32 y pulse el botón para instalar o actualizar el firmware.</p>
-        
+
         <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+
+        <p class="aviso">Compatible con Chrome / Edge en Windows, macOS, Linux y Android.</p>
     </div>
 </body>
 </html>
