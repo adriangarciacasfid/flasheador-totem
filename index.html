@@ -11,16 +11,25 @@
         (típicamente Chrome en Android) no soporta navigator.serial de forma nativa,
         quede "parcheado" con esta implementación basada en WebUSB.
         En Chrome de escritorio, donde navigator.serial ya existe de forma nativa,
-        este bloque no hace nada (se respeta la implementación nativa)..
+        este bloque no hace nada (se respeta la implementación nativa).
     -->
     <script type="module">
         import { serial as polyfillSerial } from "https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/+esm";
 
-        if (!('serial' in navigator)) {
+        const esAndroid = /Android/i.test(navigator.userAgent);
+
+        // IMPORTANTE: en Android, navigator.serial puede EXISTIR (soporte parcial
+        // solo para Bluetooth RFCOMM) aunque no sirva para USB. Por eso no basta con
+        // comprobar si existe: en Android forzamos SIEMPRE el polyfill basado en WebUSB,
+        // que es lo único que realmente funciona con USB en este navegador ahora mismo.
+        if (esAndroid) {
             navigator.serial = polyfillSerial;
-            console.log("[Polyfill] navigator.serial no estaba disponible de forma nativa. Se ha aplicado el polyfill basado en WebUSB.");
+            console.log("[Polyfill] Android detectado. Se fuerza el uso del polyfill basado en WebUSB para navigator.serial.");
+        } else if (!('serial' in navigator)) {
+            navigator.serial = polyfillSerial;
+            console.log("[Polyfill] navigator.serial no disponible de forma nativa. Se aplica el polyfill.");
         } else {
-            console.log("[Polyfill] navigator.serial ya está disponible de forma nativa. No se aplica el polyfill.");
+            console.log("[Polyfill] Escritorio con navigator.serial nativo. No se aplica el polyfill.");
         }
     </script>
 
