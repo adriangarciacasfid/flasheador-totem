@@ -18,16 +18,28 @@
 
         const esAndroid = /Android/i.test(navigator.userAgent);
 
-        // IMPORTANTE: en Android, navigator.serial puede EXISTIR (soporte parcial
-        // solo para Bluetooth RFCOMM) aunque no sirva para USB. Por eso no basta con
-        // comprobar si existe: en Android forzamos SIEMPRE el polyfill basado en WebUSB,
-        // que es lo único que realmente funciona con USB en este navegador ahora mismo.
+        // IMPORTANTE: en Chrome para Android, "navigator.serial" ya existe como
+        // propiedad de solo lectura (tiene getter pero no setter, soporte parcial
+        // nativo solo para Bluetooth RFCOMM). Por eso NO se puede hacer
+        // "navigator.serial = polyfillSerial" directamente (lanza TypeError).
+        // Hay que usar Object.defineProperty para redefinir la propiedad.
+        function forzarPolyfill(motivo) {
+            try {
+                Object.defineProperty(navigator, 'serial', {
+                    value: polyfillSerial,
+                    configurable: true,
+                    writable: true
+                });
+                console.log("[Polyfill] Aplicado correctamente. Motivo: " + motivo);
+            } catch (err) {
+                console.error("[Polyfill] No se pudo redefinir navigator.serial:", err);
+            }
+        }
+
         if (esAndroid) {
-            navigator.serial = polyfillSerial;
-            console.log("[Polyfill] Android detectado. Se fuerza el uso del polyfill basado en WebUSB para navigator.serial.");
+            forzarPolyfill("Android detectado, se fuerza WebUSB sobre el soporte parcial nativo.");
         } else if (!('serial' in navigator)) {
-            navigator.serial = polyfillSerial;
-            console.log("[Polyfill] navigator.serial no disponible de forma nativa. Se aplica el polyfill.");
+            forzarPolyfill("navigator.serial no disponible de forma nativa.");
         } else {
             console.log("[Polyfill] Escritorio con navigator.serial nativo. No se aplica el polyfill.");
         }
